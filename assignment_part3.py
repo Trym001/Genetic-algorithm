@@ -1,26 +1,35 @@
 import string
 import random
+import sys
 
-solutionName = input("Please enter your name in only lower-cases sir/ma'am\nhere:\t")
-solutionName = str(solutionName)
+
+letters = list(string.ascii_lowercase)
+letters.append(' ')
+letters.reverse()
+
+solutionName = input("Please enter your name in lower-cases only sir/ma'am\nhere:\t")
+solutionName = str(solutionName.lower())
+
+if set(solutionName).difference(letters):
+    raise Exception("Sorry, no special characters >_<")
+
+listSolutionName = list(solutionName)
+lenOfName = len(solutionName)
 population = []
 
 
 def matching_char_in_sequence(my_name, random_name):
-    num_char_seq = 0
+    matching_char_index = []
 
-    for i in range(len(my_name)):
+    for i in range(lenOfName):
         if my_name[i] == random_name[i]:
-            num_char_seq += 1
+            matching_char_index.append(i)
 
-    return num_char_seq
+    return matching_char_index
 
 
-def gen_population(my_name) -> population:
-    res_first_name = ''.join(random.choices(string.ascii_lowercase, k=my_name.find(' ')))
-    res_last_name = ''.join(random.choices(string.ascii_lowercase, k=(len(my_name) - my_name.find(' ') - 1)))
-    res_name = str(res_first_name + " " + res_last_name)
-
+def gen_population(letters) -> population:
+    res_name = random.choices(letters, k=lenOfName)
     return res_name
 
 
@@ -29,44 +38,57 @@ def fitness(num_char_seq: int, len_of_string: int):
     return score
 
 
-if __name__ == "__main__":  # Might not need the main loop!
-    numCharSeq = []
-    lenOfName = len(solutionName)
+def crossover_and_mutate(letters, matching_char_parent1, matching_char_parent2, parent1, parent2):  # make baby
+    child = ''.join(random.choices(letters, k=lenOfName))
+    child = list(child)
+    for j in matching_char_parent1:
+        child[j] = parent1[j]
+    for j in matching_char_parent2:
+        child[j] = parent2[j]
+
+    ''.join(child)
+    return child
+
+
+if __name__ == "__main__":
 
     # population
-    for i in range(1000):
-        population.append(gen_population(solutionName))
-        numCharSeq.append(matching_char_in_sequence(solutionName, population[i]))
-
-    #print(population)
+    for s in range(1000):
+        population.append(gen_population(letters))
 
     # generation
     for i in range(10000):
+        matchingCharIndex = []
+        numCharSeq = []
         populationScores = []
+
         for s in range(len(population)):
-            populationScores.append( (fitness(num_char_seq=numCharSeq[s], len_of_string=lenOfName), population[s]) )
+            matchingCharIndex.append(matching_char_in_sequence(listSolutionName, list(population[s])))
+            numCharSeq.append(len(matchingCharIndex[s]))
+            populationScores.append((fitness(num_char_seq=numCharSeq[s], len_of_string=lenOfName), ''.join(population[s])))
+
         populationScores.sort(key=lambda x: x[0], reverse=True)
-        print(f"=== Gen {i} best solutions === ")
-        print(populationScores[0])
+        if populationScores[0][0] >= 1:
+            print(f"=== Gen {i} found the name ===")
+            print("Fitness score:", populationScores[0][0], "AI generated name:", "'" + populationScores[0][1] + "'")
 
-        bestGuesses = populationScores[:100]
-        elements = []
-        counter = 1
-        halfFirstName = int(solutionName.find(" ") - solutionName.find(" ")/2)
-        wholeFirstName = solutionName.find(" ")
-        wholeLastName = len(solutionName)
-        halfLastName = len(solutionName)-int(wholeFirstName*2)
-        for s in bestGuesses:
-            elements.append(s[1][:halfFirstName] + bestGuesses[counter][1][halfFirstName:wholeFirstName]
-                            + s[1][wholeFirstName:halfLastName] +
-                            bestGuesses[counter][1][halfLastName:wholeLastName])
-            counter += 1
-            counter %= 100
+            input("Press enter to quit")
+            sys.exit(0)
 
+        else:
+            print(f"=== Gen {i} best solutions === ")
+            print("Fitness score:", round(populationScores[0][0], 4), "AI generated name:", "'" + populationScores[0][1] + "'\n")
+
+        bestFit = populationScores[:100]
         newGen = []
-        for _ in range(1000):
-            e1 = random.choices(elements)
-
-            newGen.append(e1)
-
+        for s in range(len(bestFit)):
+            countLooper = (1 + s) % len(bestFit)
+            newGen.append(crossover_and_mutate(
+                letters,
+                matchingCharIndex[s],
+                matchingCharIndex[countLooper],
+                bestFit[s][1],
+                bestFit[countLooper][1])
+            )
         population = newGen
+
