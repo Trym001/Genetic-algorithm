@@ -39,18 +39,6 @@ def fitness(num_char_seq: int, len_of_string: int):
     return score
 
 
-def crossover_and_mutate(matching_char_parent1, matching_char_parent2, parent1, parent2):  # make baby
-    child = ''.join(random.choices(letters, k=lenOfName))
-    child = list(child)
-    for j in matching_char_parent1:
-        child[j] = parent1[j]
-    for j in matching_char_parent2:
-        child[j] = parent2[j]
-
-    ''.join(child)
-    return child
-
-
 def uniform_crossover(a: str, b: str, p):
     a = list(a)
     b = list(b)
@@ -61,7 +49,7 @@ def uniform_crossover(a: str, b: str, p):
 
 
 def mutation(a: list, p):
-    if p < 0.1:
+    if p < 0.05:
         a[random.choice(list(range(len(a))))] = random.choice(letters)
     return a
 
@@ -94,15 +82,16 @@ if __name__ == "__main__":
             print(f"=== Gen {i} best solutions === ")
             print("Fitness score:", round(populationScores[0][0], 4), "AI generated name:", "'" + populationScores[0][1] + "'\n")
 
-        bestFit = populationScores
+        bestFit = populationScores[:500]
         newGen = []
         for s in range(len(bestFit)):
             countLooper = (1 + s) % len(bestFit)
-            newGen.append(uniform_crossover(
-                bestFit[s][1],
-                bestFit[countLooper][1],
-                np.random.rand(lenOfName)
-            ))
-            newGen[s] = mutation(newGen[s], np.random.rand(1))
+            for _ in range(2):
+                newGen.append(uniform_crossover(
+                    bestFit[s][1],
+                    bestFit[countLooper][1],
+                    np.random.rand(lenOfName)
+                ))
+                newGen[s] = mutation(newGen[s], np.random.rand(1))
         population = newGen
 

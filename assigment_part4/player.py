@@ -102,7 +102,7 @@ class GeneticAlgorithm(Player):
                         mutation['X']['new_game_plan'].append(player_chosen_square)
 
                     state.make_move(player_chosen_square, player['letter'])
-                    player['game_plan'].pop(i)
+                    #player['game_plan'].pop(i)
 
                 else:
                     # O player
@@ -114,7 +114,7 @@ class GeneticAlgorithm(Player):
                         mutation['O']['new_game_plan'].append(other_player_chosen_square)
 
                     state.make_move(other_player_chosen_square, other_player['letter'])
-                    other_player['game_plan'].pop(i)
+                    #other_player['game_plan'].pop(i)
 
                 if state.current_winner != None or not state.empty_squares():    # Check if x win
                     score1, score2 = self.fitness(state, player, other_player)
@@ -124,16 +124,24 @@ class GeneticAlgorithm(Player):
     # https://medium.com/@samiran.bera/crossover-operator-the-heart-of-genetic-algorithm-6c0fdcb405c0
 
     @staticmethod
-    def uniform_crossover(a: list, b: list, p: list):
-        child_a, child_b = []
+    def uniform_crossover(a: list, b: list, p: list, state):
+        child_a = child_b = []
         for i in range(len(p)):
             j = i
             if p[i] < 0.5:
-                while not child_a.count(a[i]) == child_b.count(b[j]) == 0:
-                    j += 1
-                    j %= len(p)
-                child_a.append(b[j])
-                child_b.append(a[i])
+                if not child_a.count(a[i]) == child_b.count(b[j]) == 0:
+                    possible_moves = state.available_moves()
+                    for subtract_a in child_a:
+                        possible_moves.remove(subtract_a)
+                    child_a.append(random.choice(possible_moves))
+
+                    possible_moves = state.available_moves()
+                    for subtract_b in child_b:
+                        possible_moves.remove(subtract_b)
+                    child_b.append(random.choice(possible_moves))
+                else:
+                    child_a.append(b[j])
+                    child_b.append(a[i])
 
         return child_a, child_b
 

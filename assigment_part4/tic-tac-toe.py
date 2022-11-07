@@ -113,17 +113,20 @@ def play(game, x_player, o_player, print_game=True):
             s += 1  # each individual only plays one time.
 
         ranked_population.sort(key=lambda x: x[0], reverse=True)
-        ranked_population = ranked_population[:n_population]
+        half_population = int(n_population/2)
+        ranked_population = ranked_population[:half_population]
 
         new_gen = []
         for s in range(len(ranked_population) - 1):
-            new_gen1, new_gen2 = x_player.uniform_crossover(
-                ranked_population[s][1],
-                ranked_population[s + 1][1],
-                np.random.rand(len(ranked_population[s][1]))
-            )
-            for choice in [new_gen1, new_gen2]:
-                new_gen.append(choice)
+            for _ in range(2):
+                new_gen1, new_gen2 = x_player.uniform_crossover(
+                    ranked_population[s][1],
+                    ranked_population[s + 1][1],
+                    np.random.rand(len(ranked_population[s][1])),
+                    game
+                )
+                for choice in [new_gen1, new_gen2]:
+                    new_gen.append(choice)
             s += 1
         population = new_gen[:n_population]
         print(f" ===Gen: {gen} ===\n=== Best score: {ranked_population[0][0]} ===\n")

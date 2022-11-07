@@ -1,3 +1,8 @@
-my_list = [0,0,1,2,3]
+my_list = list(range(9))
 
-print(my_list.count(0))
+
+subtract = [0,2,5,8]
+
+for i in subtract:
+    my_list.remove(i)
+print(my_list)
