@@ -1,6 +1,8 @@
 import math
 import random
 
+import numpy as np
+
 
 class Player():
     def __init__(self, letter):
@@ -125,26 +127,106 @@ class GeneticAlgorithm(Player):
 
     @staticmethod
     def uniform_crossover(a: list, b: list, p: list, state):
-        child_a = child_b = []
+        child_a = []
+        child_b = []
+        possible_moves_a = list(state.available_moves())
+        possible_moves_b = list(state.available_moves())
         for i in range(len(p)):
-            j = i
-            if p[i] < 0.5:
-                if not child_a.count(a[i]) == child_b.count(b[j]) == 0:
-                    possible_moves = state.available_moves()
-                    for subtract_a in child_a:
-                        possible_moves.remove(subtract_a)
-                    child_a.append(random.choice(possible_moves))
-
-                    possible_moves = state.available_moves()
-                    for subtract_b in child_b:
-                        possible_moves.remove(subtract_b)
-                    child_b.append(random.choice(possible_moves))
+            if p[i] < 0.7:
+                if not {b[i]}.difference(possible_moves_a):
+                    child_a.append(b[i])
+                    possible_moves_a.remove(b[i])
                 else:
-                    child_a.append(b[j])
-                    child_b.append(a[i])
+                    random_choice = random.choice(possible_moves_a)
+                    child_a.append(random_choice)
+                    possible_moves_a.remove(random_choice)
 
+                if not {a[i]}.difference(possible_moves_b):
+                    child_b.append(a[i])
+                    possible_moves_b.remove(a[i])
+                else:
+                    random_choice = random.choice(possible_moves_b)
+                    child_b.append(random_choice)
+                    possible_moves_b.remove(random_choice)
+
+            else:
+                if not {a[i]}.difference(possible_moves_a):
+                    child_a.append(a[i])
+                    possible_moves_a.remove(a[i])
+                else:
+                    random_choice = random.choice(possible_moves_a)
+                    child_a.append(random_choice)
+                    possible_moves_a.remove(random_choice)
+
+                if not {b[i]}.difference(possible_moves_b):
+                    child_b.append(b[i])
+                    possible_moves_b.remove(b[i])
+                else:
+                    random_choice = random.choice(possible_moves_b)
+                    child_b.append(random_choice)
+                    possible_moves_b.remove(random_choice)
         return child_a, child_b
 
     @staticmethod
     def mutate(available_moves):
         return random.choice(available_moves)
+
+
+    def ga_main_loop(self, game):
+        population = []
+        # initial population
+        for i in range(200):
+            population.append(self.generate_population(game))
+
+        n_population = len(population)
+
+        # generations
+        for gen in range(200):
+            ranked_population = []
+            for s in range(len(population) - 1):  # game simulation
+                mutated, score1, score2 = self.simulation(
+                    game,
+                    {'letter': 'X', 'game_plan': population[s].copy(), 'score': None},
+                    {'letter': 'O', 'game_plan': population[s + 1].copy(), 'score': None}
+                )
+
+                counter = 0
+                for mutation in mutated['X']['index']:
+                    population[s][mutation] = mutated['X']['new_game_plan'][counter]
+                    counter += 1
+                counter = 0
+                for mutation in mutated['O']['index']:
+                    population[s + 1][mutation] = mutated['O']['new_game_plan'][counter]
+                    counter += 1
+
+                for j in [score1, score2]:
+                    ranked_population.append((j, population[s])) \
+                        if j == score1 else ranked_population.append((j, population[s + 1]))
+
+                if gen == 499:
+                    print(f"==Game nr {s} and {s + 1}==")
+                    game.print_board()
+
+                for clear_board in range(9):
+                    game.board[clear_board] = ' '
+                game.current_winner = None
+                s += 1  # each individual only plays one time.
+
+            ranked_population.sort(key=lambda x: x[0], reverse=True)
+            half_population = int(n_population / 2)
+            ranked_population = ranked_population[:half_population]
+
+            new_gen = []
+            for s in range(len(ranked_population) - 1):
+                for _ in range(2):
+                    new_gen1, new_gen2 = self.uniform_crossover(
+                        ranked_population[s][1],
+                        ranked_population[s + 1][1],
+                        np.random.rand(len(ranked_population[s][1])),
+                        game
+                    )
+                    for choice in [new_gen1, new_gen2]:
+                        new_gen.append(choice)
+                s += 1
+            population = new_gen[:n_population]
+            print(f" ===Gen: {gen} ===\n=== Best score: {ranked_population[0][0]} ===\n")

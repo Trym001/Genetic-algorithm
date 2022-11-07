@@ -1,8 +1,7 @@
-my_list = list(range(9))
+import random
 
+myRandom = random.randint(0,5)
 
-subtract = [0,2,5,8]
+print(myRandom)
 
-for i in subtract:
-    my_list.remove(i)
-print(my_list)
+print(myRandom)
