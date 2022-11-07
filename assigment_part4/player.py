@@ -12,6 +12,34 @@ class Player():
         pass
 
 
+class HumanPlayer(Player):
+    def __init__(self, letter):
+        super().__init__(letter)
+
+    def get_move(self, game):
+        valid_square = False
+        val = None
+        while not valid_square:
+            square = input(self.letter + '\'s turn. Input move (0-9): ')
+            try:
+                val = int(square)
+                if val not in game.available_moves():
+                    raise ValueError
+                valid_square = True
+            except ValueError:
+                print('Invalid square. Try again.')
+        return val
+
+
+class RandomComputerPlayer(Player):
+    def __init__(self, letter):
+        super().__init__(letter)
+
+    def get_move(self, game):
+        square = random.choice(game.available_moves())
+        return square
+
+
 class SmartComputerPlayer(Player):
     def __init__(self, letter):
         super().__init__(letter)
@@ -60,15 +88,22 @@ class GeneticAlgorithm(Player):
     def __init__(self, letter):
         super().__init__(letter)
 
+    def get_move(self, game):
+        if len(game.available_moves()) == 9:
+            square = random.choice(game.available_moves())
+        else:
+            square = self.ga_main_loop(game)
+        return square
+
     @staticmethod
     def generate_population(state):
         game_plan = []
         possible_moves = []
         # check current state of game and produce init population based on that.
-        for moves in state.available_moves():
+        for moves in list(state.available_moves()):
             possible_moves.append(moves)
         # prepare move-list for simulation
-        for i in range(5):
+        for i in range(len(possible_moves)):
             game_plan.append(random.choice(possible_moves))
             possible_moves.remove(game_plan[i])
         return game_plan
@@ -132,7 +167,7 @@ class GeneticAlgorithm(Player):
         possible_moves_a = list(state.available_moves())
         possible_moves_b = list(state.available_moves())
         for i in range(len(p)):
-            if p[i] < 0.7:
+            if p[i] < 0.6:
                 if not {b[i]}.difference(possible_moves_a):
                     child_a.append(b[i])
                     possible_moves_a.remove(b[i])
@@ -173,6 +208,7 @@ class GeneticAlgorithm(Player):
 
 
     def ga_main_loop(self, game):
+        current_possible_moves = list(game.available_moves())
         population = []
         # initial population
         for i in range(200):
@@ -181,7 +217,7 @@ class GeneticAlgorithm(Player):
         n_population = len(population)
 
         # generations
-        for gen in range(200):
+        for gen in range(400):
             ranked_population = []
             for s in range(len(population) - 1):  # game simulation
                 mutated, score1, score2 = self.simulation(
@@ -207,7 +243,7 @@ class GeneticAlgorithm(Player):
                     print(f"==Game nr {s} and {s + 1}==")
                     game.print_board()
 
-                for clear_board in range(9):
+                for clear_board in current_possible_moves:
                     game.board[clear_board] = ' '
                 game.current_winner = None
                 s += 1  # each individual only plays one time.
@@ -230,3 +266,6 @@ class GeneticAlgorithm(Player):
                 s += 1
             population = new_gen[:n_population]
             print(f" ===Gen: {gen} ===\n=== Best score: {ranked_population[0][0]} ===\n")
+        print(population[0])
+        best_action = population[0][0]
+        return best_action

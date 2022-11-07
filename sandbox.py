@@ -1,7 +1,7 @@
 import random
 
-myRandom = random.randint(0,5)
+x = []
 
-print(myRandom)
-
-print(myRandom)
+x.append(0)
+x.append(1)
+print(x)
