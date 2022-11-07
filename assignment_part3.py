@@ -2,6 +2,7 @@ import string
 import random
 import sys
 
+import numpy as np
 
 letters = list(string.ascii_lowercase)
 letters.append(' ')
@@ -28,7 +29,7 @@ def matching_char_in_sequence(my_name, random_name):
     return matching_char_index
 
 
-def gen_population(letters) -> population:
+def gen_population():
     res_name = random.choices(letters, k=lenOfName)
     return res_name
 
@@ -38,7 +39,7 @@ def fitness(num_char_seq: int, len_of_string: int):
     return score
 
 
-def crossover_and_mutate(letters, matching_char_parent1, matching_char_parent2, parent1, parent2):  # make baby
+def crossover_and_mutate(matching_char_parent1, matching_char_parent2, parent1, parent2):  # make baby
     child = ''.join(random.choices(letters, k=lenOfName))
     child = list(child)
     for j in matching_char_parent1:
@@ -50,11 +51,25 @@ def crossover_and_mutate(letters, matching_char_parent1, matching_char_parent2, 
     return child
 
 
-if __name__ == "__main__":
+def uniform_crossover(a: str, b: str, p):
+    a = list(a)
+    b = list(b)
+    for crossover_index in range(len(p)):
+        if p[crossover_index] <= 0.7:
+            a[crossover_index] = b[crossover_index]
+    return a
 
+
+def mutation(a: list, p):
+    if p < 0.1:
+        a[random.choice(list(range(len(a))))] = random.choice(letters)
+    return a
+
+
+if __name__ == "__main__":
     # population
     for s in range(1000):
-        population.append(gen_population(letters))
+        population.append(gen_population())
 
     # generation
     for i in range(10000):
@@ -79,16 +94,15 @@ if __name__ == "__main__":
             print(f"=== Gen {i} best solutions === ")
             print("Fitness score:", round(populationScores[0][0], 4), "AI generated name:", "'" + populationScores[0][1] + "'\n")
 
-        bestFit = populationScores[:100]
+        bestFit = populationScores
         newGen = []
         for s in range(len(bestFit)):
             countLooper = (1 + s) % len(bestFit)
-            newGen.append(crossover_and_mutate(
-                letters,
-                matchingCharIndex[s],
-                matchingCharIndex[countLooper],
+            newGen.append(uniform_crossover(
                 bestFit[s][1],
-                bestFit[countLooper][1])
-            )
+                bestFit[countLooper][1],
+                np.random.rand(lenOfName)
+            ))
+            newGen[s] = mutation(newGen[s], np.random.rand(1))
         population = newGen
 

@@ -59,11 +59,14 @@ class GeneticAlgorithm(Player):
         super().__init__(letter)
 
     @staticmethod
-    def generate_population():
+    def generate_population(state):
         game_plan = []
-        possible_moves = [0,1,2,3,4,5,6,7,8]
+        possible_moves = []
+        # check current state of game and produce init population based on that.
+        for moves in state.available_moves():
+            possible_moves.append(moves)
         # prepare move-list for simulation
-        for i in range(9):
+        for i in range(5):
             game_plan.append(random.choice(possible_moves))
             possible_moves.remove(game_plan[i])
         return game_plan
@@ -71,18 +74,18 @@ class GeneticAlgorithm(Player):
     @staticmethod
     def fitness(state, player, other_player):
         if state.current_winner == player['letter']:
-            player['score'] = 1 * state.num_empty_squares()
-            other_player['score'] = -1 * state.num_empty_squares()
+            player['score'] = 1 * state.num_empty_squares() + 1
+            other_player['score'] = -1 * state.num_empty_squares() + 1
             return player['score'], other_player['score']
 
         elif state.current_winner == other_player['letter']:
-            player['score'] = -1 * state.num_empty_squares()
-            other_player['score'] = 1 * state.num_empty_squares()
+            player['score'] = -1 * state.num_empty_squares() + 1
+            other_player['score'] = 1 * state.num_empty_squares() + 1
             return player['score'], other_player['score']
 
         elif not state.empty_squares():
-            player['score'] = 10
-            other_player['score'] = 10
+            player['score'] = 0
+            other_player['score'] = 0
             return player['score'], other_player['score']
 
     def simulation(self, state, player, other_player):    # Simulate the whole game for two individuals in population
@@ -119,14 +122,20 @@ class GeneticAlgorithm(Player):
 
     # got some help from the interwebs:
     # https://medium.com/@samiran.bera/crossover-operator-the-heart-of-genetic-algorithm-6c0fdcb405c0
+
     @staticmethod
-    def uniform_crossover(a, b, p):
+    def uniform_crossover(a: list, b: list, p: list):
+        child_a, child_b = []
         for i in range(len(p)):
+            j = i
             if p[i] < 0.5:
-                temp = a[i]
-                a[i] = b[i]
-                b[i] = temp
-        return a, b
+                while not child_a.count(a[i]) == child_b.count(b[j]) == 0:
+                    j += 1
+                    j %= len(p)
+                child_a.append(b[j])
+                child_b.append(a[i])
+
+        return child_a, child_b
 
     @staticmethod
     def mutate(available_moves):

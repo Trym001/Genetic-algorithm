@@ -1,1 +1,3 @@
-print(list(range(0, 9)))
+my_list = [0,0,1,2,3]
+
+print(my_list.count(0))

@@ -75,13 +75,13 @@ def play(game, x_player, o_player, print_game=True):
 
     population = []
     # initial population
-    for i in range(1000):
-        population.append(x_player.generate_population())
+    for i in range(200):
+        population.append(x_player.generate_population(game))
 
     n_population = len(population)
 
     # generations
-    for gen in range(500):
+    for gen in range(200):
         ranked_population = []
         for s in range(len(population) - 1):  # game simulation
             mutated, score1, score2 = x_player.simulation(
