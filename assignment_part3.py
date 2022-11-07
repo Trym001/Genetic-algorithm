@@ -74,6 +74,8 @@ if __name__ == "__main__":
         if populationScores[0][0] >= 1:
             print(f"=== Gen {i} found the name ===")
             print("Fitness score:", populationScores[0][0], "AI generated name:", "'" + populationScores[0][1] + "'")
+            print(f"=== Number of initial population: {len(population)} ===\n"
+                  f"=== Crossover probability: 0.7 and mutation pobability: 0.05 ===")
 
             input("Press enter to quit")
             sys.exit(0)

@@ -111,19 +111,26 @@ class GeneticAlgorithm(Player):
     @staticmethod
     def fitness(state, player, other_player):
         if state.current_winner == player['letter']:
-            player['score'] = 1 * state.num_empty_squares() + 1
-            other_player['score'] = -1 * state.num_empty_squares() + 1
-            return player['score'], other_player['score']
+            player_score = 1 * state.num_empty_squares() + 1
+            other_player_score = -1 * state.num_empty_squares() + 1
+
+            player['score'] = abs(player_score) / abs(other_player_score)
+            other_player['score'] = other_player_score
 
         elif state.current_winner == other_player['letter']:
-            player['score'] = -1 * state.num_empty_squares() + 1
-            other_player['score'] = 1 * state.num_empty_squares() + 1
-            return player['score'], other_player['score']
+            player_score = -1 * state.num_empty_squares() + 1
+            other_player_score = 1 * state.num_empty_squares() + 1
+            player['score'] = abs(player_score) / abs(other_player_score)
+            other_player['score'] = other_player_score
 
-        elif not state.empty_squares():
-            player['score'] = 0
-            other_player['score'] = 0
-            return player['score'], other_player['score']
+        else:
+            player_score = 10
+            other_player_score = 10
+            player['score'] = abs(player_score) / abs(other_player_score)
+            other_player['score'] = other_player_score
+
+
+        return player['score'], other_player['score']
 
     def simulation(self, state, player, other_player):    # Simulate the whole game for two individuals in population
         mutation = {'X': {'new_game_plan': [], 'index': []}, 'O': {'new_game_plan': [], 'index': []}}
