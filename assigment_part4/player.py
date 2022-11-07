@@ -1,8 +1,5 @@
 import math
 import random
-import sys
-
-import numpy as np
 
 
 class Player():
@@ -61,10 +58,6 @@ class GeneticAlgorithm(Player):
     def __init__(self, letter):
         super().__init__(letter)
 
-    def get_move(self, game):
-        square = self.ga_main(game)
-        return square
-
     @staticmethod
     def generate_population():
         game_plan = []
@@ -88,8 +81,8 @@ class GeneticAlgorithm(Player):
             return player['score'], other_player['score']
 
         elif not state.empty_squares():
-            player['score'] = 0
-            other_player['score'] = 0
+            player['score'] = 10
+            other_player['score'] = 10
             return player['score'], other_player['score']
 
     def simulation(self, state, player, other_player):    # Simulate the whole game for two individuals in population
@@ -138,54 +131,3 @@ class GeneticAlgorithm(Player):
     @staticmethod
     def mutate(available_moves):
         return random.choice(available_moves)
-
-    def ga_main(self, state):
-        population = []
-        # initial population
-        for i in range(1000):
-            population.append(self.generate_population())
-
-        n_population = len(population)
-
-        # generations
-        for gen in range(500):
-            print(f"Gen: {gen}")
-            ranked_population = []
-            for s in range(len(population)-1):  # game simulation
-                mutated, score1, score2 = self.simulation(
-                    state,
-                    {'letter': 'X', 'game_plan': population[s].copy(), 'score': None},
-                    {'letter': 'O', 'game_plan': population[s+1].copy(), 'score': None}
-                )
-
-                counter = 0
-                for mutation in mutated['X']['index']:
-                    population[s][mutation] = mutated['X']['new_game_plan'][counter]
-                    counter += 1
-                counter = 0
-                for mutation in mutated['O']['index']:
-                    population[s+1][mutation] = mutated['O']['new_game_plan'][counter]
-                    counter += 1
-
-                for j in [score1, score2]:
-                    ranked_population.append((j, population[s])) \
-                        if j == score1 else ranked_population.append((j, population[s+1]))
-                for clear_board in range(9):
-                    state.board[clear_board] = ' '
-                state.current_winner = None
-                s += 1  # each individual only plays one time.
-
-            ranked_population.sort(key=lambda x: x[0], reverse=True)
-            ranked_population = ranked_population[:n_population]
-
-            new_gen = []
-            for s in range(len(ranked_population)-1):
-                new_gen1, new_gen2 = self.uniform_crossover(
-                    ranked_population[s][1],
-                    ranked_population[s + 1][1],
-                    np.random.rand(len(ranked_population[s][1]))
-                )
-                for choice in [new_gen1, new_gen2]:
-                    new_gen.append(choice)
-                s += 1
-            population = new_gen[:n_population]

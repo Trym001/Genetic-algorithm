@@ -1,6 +1,10 @@
 import math
+import sys
 import time
-from player import HumanPlayer, RandomComputerPlayer, SmartComputerPlayer, GeneticAlgorithm
+
+import numpy as np
+
+from player import GeneticAlgorithm
 
 
 class TicTacToe():
@@ -69,30 +73,78 @@ def play(game, x_player, o_player, print_game=True):
     if print_game:
         game.print_board_nums()
 
-    letter = 'X'
-    while game.empty_squares():
-        if letter == 'O':
-            square = o_player.get_move(game)
-        else:
-            square = x_player.get_move(game)
-        if game.make_move(square, letter):
+    population = []
+    # initial population
+    for i in range(1000):
+        population.append(x_player.generate_population())
 
-            if print_game:
-                print(letter + ' makes a move to square {}'.format(square))
+    n_population = len(population)
+
+    # generations
+    for gen in range(500):
+        ranked_population = []
+        for s in range(len(population) - 1):  # game simulation
+            mutated, score1, score2 = x_player.simulation(
+                game,
+                {'letter': 'X', 'game_plan': population[s].copy(), 'score': None},
+                {'letter': 'O', 'game_plan': population[s + 1].copy(), 'score': None}
+            )
+
+            counter = 0
+            for mutation in mutated['X']['index']:
+                population[s][mutation] = mutated['X']['new_game_plan'][counter]
+                counter += 1
+            counter = 0
+            for mutation in mutated['O']['index']:
+                population[s + 1][mutation] = mutated['O']['new_game_plan'][counter]
+                counter += 1
+
+            for j in [score1, score2]:
+                ranked_population.append((j, population[s])) \
+                    if j == score1 else ranked_population.append((j, population[s + 1]))
+
+            if gen == 499:
+                print(f"==Game nr {s} and {s + 1}==")
                 game.print_board()
-                print('')
 
-            if game.current_winner:
-                if print_game:
-                    print(letter + ' wins!')
-                return letter  # ends the loop and exits the game
-            letter = 'O' if letter == 'X' else 'X'  # switches player
+            for clear_board in range(9):
+                game.board[clear_board] = ' '
+            game.current_winner = None
+            s += 1  # each individual only plays one time.
 
-        time.sleep(.8)
+        ranked_population.sort(key=lambda x: x[0], reverse=True)
+        ranked_population = ranked_population[:n_population]
 
-    if print_game:
-        print('It\'s a tie!')
+        new_gen = []
+        for s in range(len(ranked_population) - 1):
+            new_gen1, new_gen2 = x_player.uniform_crossover(
+                ranked_population[s][1],
+                ranked_population[s + 1][1],
+                np.random.rand(len(ranked_population[s][1]))
+            )
+            for choice in [new_gen1, new_gen2]:
+                new_gen.append(choice)
+            s += 1
+        population = new_gen[:n_population]
+        print(f" ===Gen: {gen} ===\n=== Best score: {ranked_population[0][0]} ===\n")
+        theChosenOne = [population[0], population[1]]
 
+        if gen == 499:
+            for result in range(0, 9):
+                if result%2 == 0:
+                    game.make_move(theChosenOne[0][result], 'X')
+                    game.print_board()
+                    print()
+                    time.sleep(0.8)
+
+                else:
+                    game.make_move(theChosenOne[1][result], 'O')
+                    game.print_board()
+                    print()
+                    time.sleep(0.8)
+
+
+    sys.exit(0)
 
 
 if __name__ == '__main__':
